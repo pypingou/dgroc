@@ -163,9 +163,10 @@ def generate_new_srpm(config, project):
     cwd = os.getcwd()
     os.chdir(git_folder)
     archive_name = "%s-%s.tar" % (project, commit_hash)
+    cmd = ["git", "archive", "--format=tar", "--prefix=%s/" %  project,
+           "-o%s/%s" % (get_rpm_sourcedir(), archive_name), "HEAD"]
     pull = subprocess.Popen(
-        ["git", "archive", "--format=tar", "--prefix=%s/" %  project,
-         "-o%s/%s" % (get_rpm_sourcedir(), archive_name)],
+        cmd,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out = pull.communicate()

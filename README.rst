@@ -24,12 +24,14 @@ Get it running
     [main]
     fas_user = pingou
     copr_url = https://copr.fedoraproject.org/
+    upload_command = cp %s /var/www/html/subsurface/
+    upload_url = http://my_server/subsurface/%s
+    no_ssl_check = True
     
     [subsurface]
     git_url = git://subsurface.hohndel.org/subsurface.git
     git_folder = /tmp/subsurface/
     spec_file = ~/GIT/subsurface/subsurface.spec
-
 
 * Run it::
 

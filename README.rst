@@ -14,21 +14,21 @@ Get it running
 
 * Retrieve the sources::
 
-  git clone git//github.com:pypingou/dgroc.git
+    git clone git//github.com:pypingou/dgroc.git
 
 
 * Create the configuration file ``~/.config/dgroc``
 
 * Fill the configuration file, for example::
 
-  [main]
-  fas_user = pingou
-  copr_url = https://copr.fedoraproject.org/
-
-  [subsurface]
-  git_url = git://subsurface.hohndel.org/subsurface.git
-  git_folder = /tmp/subsurface/
-  spec_file = ~/GIT/subsurface/subsurface.spec
+    [main]
+    fas_user = pingou
+    copr_url = https://copr.fedoraproject.org/
+    
+    [subsurface]
+    git_url = git://subsurface.hohndel.org/subsurface.git
+    git_folder = /tmp/subsurface/
+    spec_file = ~/GIT/subsurface/subsurface.spec
 
 
 * Run it::

@@ -163,7 +163,7 @@ def generate_new_srpm(config, project):
     cwd = os.getcwd()
     os.chdir(git_folder)
     archive_name = "%s-%s.tar" % (project, commit_hash)
-    cmd = ["git", "archive", "--format=tar", "--prefix=%s/" %  project,
+    cmd = ["git", "archive", "--format=tar", "--prefix=%s/" % project,
            "-o%s/%s" % (get_rpm_sourcedir(), archive_name), "HEAD"]
     pull = subprocess.Popen(
         cmd,
@@ -181,12 +181,12 @@ def generate_new_srpm(config, project):
         spec_file,
         commit_hash,
         archive_name,
-        config.get('main', 'fas_user'),
+        config.get('main', 'username'),
         config.get('main', 'email'))
 
     # Generate SRPM
     build = subprocess.Popen(
-        ["rpmbuild", "-bs", spec_file ],
+        ["rpmbuild", "-bs", spec_file],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
     out = build.communicate()
@@ -197,7 +197,7 @@ def generate_new_srpm(config, project):
         print out[1]
         return
     srpm = out[0].split('Wrote:')[1].strip()
-    print 'SRPM built: %s' %  srpm
+    print 'SRPM built: %s' % srpm
 
     return srpm
 
@@ -327,9 +327,9 @@ def main():
     config = ConfigParser.ConfigParser()
     config.read(args.config)
 
-    if not config.has_option('main', 'fas_user'):
+    if not config.has_option('main', 'username'):
         raise DgrocException(
-            'No `fas_user` specified in the `main` section of the '
+            'No `username` specified in the `main` section of the '
             'configuration file.')
 
     if not config.has_option('main', 'email'):

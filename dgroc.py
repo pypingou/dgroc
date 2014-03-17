@@ -10,9 +10,11 @@
 
 import argparse
 import ConfigParser
+import json
 import logging
 import os
 import subprocess
+import warnings
 from datetime import date
 
 import pygit2
@@ -20,6 +22,7 @@ import requests
 
 
 DEFAULT_CONFIG = os.path.expanduser('~/.config/dgroc')
+COPR_URL = 'http://copr.fedoraproject.org/'
 
 
 class DgrocException(Exception):
@@ -60,6 +63,8 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email):
             if row.startswith('Version:'):
                 version = row.split('Version:')[1].strip()
             if row.startswith('Release:'):
+                if commit_hash in row:
+                    raise DgrocException('Spec already up to date')
                 row = 'Release:        1.%s%%{?dist}' % (release)
             if row.startswith('Source0:'):
                 row = 'Source0:        %s' % (archive_name)
@@ -90,8 +95,9 @@ def get_rpm_sourcedir():
     return dirname
 
 
-def daily_build(config, project):
-    ''' For a given project in the configuration file do the daily rebuild
+def generate_new_srpm(config, project):
+    ''' For a given project in the configuration file generate a new srpm
+    if it is possible.
     '''
 
     if not config.has_option(project, 'git_folder'):
@@ -192,9 +198,122 @@ def daily_build(config, project):
     srpm = out[0].split('Wrote:')[1].strip()
     print 'SRPM built: %s' %  srpm
 
-    # Upload SRPM
+    return srpm
 
-    # Start build in copr
+
+def upload_srpms(config, srpms):
+    ''' Using the information provided in the configuration file,
+    upload the src.rpm generated somewhere.
+    '''
+    if not config.has_option('main', 'upload_command'):
+        raise DgrocException(
+            'No `upload_command` specified in the `main` section of the '
+            'configuration file.')
+
+    upload_command = config.get('main', 'upload_command')
+
+    for srpm in srpms:
+        cmd = upload_command % srpm
+        outcode = subprocess.call(cmd, shell=True)
+        if outcode:
+            print 'Strange result with the command:'
+            print cmd
+
+
+def copr_build(config, srpms):
+    ''' Using the information provided in the configuration file,
+    run the build in copr.
+    '''
+
+    ## dgroc config check
+    if not config.has_option('main', 'upload_url'):
+        raise DgrocException(
+            'No `upload_url` specified in the `main` section of the dgroc '
+            'configuration file.')
+
+    if not config.has_option('main', 'copr_url'):
+        warnings.warn(
+            'No `copr_url` option set in the `main` section of the dgroc '
+            'configuration file, using default: %s' % COPR_URL)
+        copr_url = COPR_URL
+    else:
+        copr_url = config.get('main', 'copr_url')
+
+    if not copr_url.endswith('/'):
+        copr_url = '%s/' % copr_url
+
+    insecure = False
+    if not config.has_option('main', 'no_ssl_check') \
+            or config.get('main', 'no_ssl_check'):
+        warnings.warn(
+            "Option `no_ssl_check` was set to True, we won't check the ssl "
+            "certificate when submitting the builds to copr")
+        insecure = config.get('main', 'no_ssl_check')
+
+    ## Copr config check
+    copr_config_file = os.path.expanduser('~/.config/copr')
+    if not os.path.exists(copr_config_file):
+        raise DgrocException('No `~/.config/copr` file found.')
+
+    copr_config = ConfigParser.ConfigParser()
+    copr_config.read(copr_config_file)
+
+    if not copr_config.has_option('copr-cli', 'username'):
+        raise DgrocException(
+            'No `username` specified in the `copr-cli` section of the copr '
+            'configuration file.')
+    username = copr_config.get('copr-cli', 'username')
+
+    if not copr_config.has_option('copr-cli', 'login'):
+        raise DgrocException(
+            'No `login` specified in the `copr-cli` section of the copr '
+            'configuration file.')
+    login = copr_config.get('copr-cli', 'login')
+
+    if not copr_config.has_option('copr-cli', 'token'):
+        raise DgrocException(
+            'No `token` specified in the `copr-cli` section of the copr '
+            'configuration file.')
+    token = copr_config.get('copr-cli', 'token')
+
+    ## Build project/srpm in copr
+    for project in srpms:
+        srpms = [
+            config.get('main', 'upload_url') % (
+                srpms[project].rsplit('/', 1)[1])
+        ]
+
+        URL = '%s/api/coprs/%s/%s/new_build/' % (
+            copr_url,
+            username,
+            project)
+
+        data = {
+            'pkgs': ' '.join(srpms),
+        }
+
+        req = requests.post(
+            URL, auth=(login, token), data=data, verify=not insecure)
+
+        if '<title>Sign in Coprs</title>' in req.text:
+            print "Invalid API token"
+            return
+
+        if req.status_code == 404:
+            if copr is None:
+                print "User %s is unknown." % user['username']
+            else:
+                print "Project %s/%s not found." % (user['username'], copr)
+            return
+        try:
+            output = json.loads(req.text)
+        except ValueError:
+            sys.stderr.write("Unknown response from server.")
+            return
+        if req.status_code != 200:
+            print "Something went wrong:\n  %s" % (output['error'])
+            return
+        print output
 
 
 def main():
@@ -217,10 +336,28 @@ def main():
             'No `email` specified in the `main` section of the '
             'configuration file.')
 
+    srpms = {}
     for project in config.sections():
         if project == 'main':
             continue
-        daily_build(config, project)
+        try:
+            srpms[project] = generate_new_srpm(config, project)
+        except DgrocException, err:
+            print '%s: %s' % (project, err)
+
+    print '%s srpms generated' % len(srpms)
+    if not srpms:
+        return
+
+    try:
+        upload_srpms(config, srpms.values())
+    except DgrocException, err:
+        print err
+
+    try:
+        copr_build(config, srpms)
+    except DgrocException, err:
+        print err
 
 
 if __name__ == '__main__':

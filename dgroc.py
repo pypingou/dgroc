@@ -12,6 +12,7 @@ import argparse
 import ConfigParser
 import logging
 import os
+import subprocess
 from datetime import date
 
 import pygit2
@@ -45,12 +46,10 @@ def get_arguments():
     return parser.parse_args()
 
 
-def update_spec(spec_file, commit_hash, packager, email):
+def update_spec(spec_file, commit_hash, archive_name, packager, email):
     ''' Update the release tag and changelog of the specified spec file
     to work with the specified git commit_hash.
     '''
-    if '~' in spec_file:
-        spec_file = os.path.expanduser(spec_file)
 
     release = '%sgit%s' % (date.today().strftime('%Y%m%d'), commit_hash)
     output = []
@@ -61,7 +60,9 @@ def update_spec(spec_file, commit_hash, packager, email):
             if row.startswith('Version:'):
                 version = row.split('Version:')[1].strip()
             if row.startswith('Release:'):
-                row = 'Release:        1.%s{?dist}' % (release)
+                row = 'Release:        1.%s%%{?dist}' % (release)
+            if row.startswith('Source0:'):
+                row = 'Source0:        %s' % (archive_name)
             if row.startswith('%changelog'):
                 output.append(row)
                 output.append('* %s %s <%s> - %s-%s' % (
@@ -77,6 +78,16 @@ def update_spec(spec_file, commit_hash, packager, email):
             stream.write(row + '\n')
 
     print 'Spec file updated: %s' % spec_file
+
+
+def get_rpm_sourcedir():
+    ''' Retrieve the _sourcedir for rpm
+    '''
+    dirname = subprocess.Popen(
+        ['rpm', '-E', '%_sourcedir'],
+        stdout=subprocess.PIPE
+    ).stdout.read()[:-1]
+    return dirname
 
 
 def daily_build(config, project):
@@ -110,7 +121,18 @@ def daily_build(config, project):
         pygit2.clone_repository(git_url, git_folder)
 
     # git pull
-    ## TODO
+    cwd = os.getcwd()
+    os.chdir(git_folder)
+    pull = subprocess.Popen(
+        ["git", "pull"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    out = pull.communicate()
+    os.chdir(cwd)
+    if pull.returncode:
+        print 'Strange result of the git pull:'
+        print out[0]
+        return
 
     # Retrieve last commit
     repo = pygit2.Repository(git_folder)
@@ -131,14 +153,44 @@ def daily_build(config, project):
     if not changed:
         return
 
+    # Build sources
+    cwd = os.getcwd()
+    os.chdir(git_folder)
+    archive_name = "%s-%s.tar" % (project, commit_hash)
+    pull = subprocess.Popen(
+        ["git", "archive", "--format=tar", "--prefix=%s/" %  project,
+         "-o%s/%s" % (get_rpm_sourcedir(), archive_name)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    out = pull.communicate()
+    os.chdir(cwd)
+
     # Update spec file
+    spec_file = config.get(project, 'spec_file')
+    if '~' in spec_file:
+        spec_file = os.path.expanduser(spec_file)
+
     update_spec(
-        config.get(project, 'spec_file'),
+        spec_file,
         commit_hash,
+        archive_name,
         config.get('main', 'fas_user'),
-        config.get('main', 'email'),)
+        config.get('main', 'email'))
 
     # Generate SRPM
+    build = subprocess.Popen(
+        ["rpmbuild", "-bs", spec_file ],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE)
+    out = build.communicate()
+    os.chdir(cwd)
+    if build.returncode:
+        print 'Strange result of the rpmbuild -bs:'
+        print out[0]
+        print out[1]
+        return
+    srpm = out[0].split('Wrote:')[1].strip()
+    print 'SRPM built: %s' %  srpm
 
     # Upload SRPM
 

@@ -10,10 +10,12 @@
 
 import argparse
 import ConfigParser
+import datetime
 import json
 import logging
 import os
 import subprocess
+import time
 import warnings
 from datetime import date
 
@@ -30,6 +32,39 @@ class DgrocException(Exception):
     other.
     '''
     pass
+
+
+def _get_copr_auth():
+    ''' Return the username, login and API token from the copr configuration
+    file.
+    '''
+    ## Copr config check
+    copr_config_file = os.path.expanduser('~/.config/copr')
+    if not os.path.exists(copr_config_file):
+        raise DgrocException('No `~/.config/copr` file found.')
+
+    copr_config = ConfigParser.ConfigParser()
+    copr_config.read(copr_config_file)
+
+    if not copr_config.has_option('copr-cli', 'username'):
+        raise DgrocException(
+            'No `username` specified in the `copr-cli` section of the copr '
+            'configuration file.')
+    username = copr_config.get('copr-cli', 'username')
+
+    if not copr_config.has_option('copr-cli', 'login'):
+        raise DgrocException(
+            'No `login` specified in the `copr-cli` section of the copr '
+            'configuration file.')
+    login = copr_config.get('copr-cli', 'login')
+
+    if not copr_config.has_option('copr-cli', 'token'):
+        raise DgrocException(
+            'No `token` specified in the `copr-cli` section of the copr '
+            'configuration file.')
+    token = copr_config.get('copr-cli', 'token')
+
+    return (username, login, token)
 
 
 def get_arguments():
@@ -251,32 +286,9 @@ def copr_build(config, srpms):
             "certificate when submitting the builds to copr")
         insecure = config.get('main', 'no_ssl_check')
 
-    ## Copr config check
-    copr_config_file = os.path.expanduser('~/.config/copr')
-    if not os.path.exists(copr_config_file):
-        raise DgrocException('No `~/.config/copr` file found.')
+    username, login, token = _get_copr_auth()
 
-    copr_config = ConfigParser.ConfigParser()
-    copr_config.read(copr_config_file)
-
-    if not copr_config.has_option('copr-cli', 'username'):
-        raise DgrocException(
-            'No `username` specified in the `copr-cli` section of the copr '
-            'configuration file.')
-    username = copr_config.get('copr-cli', 'username')
-
-    if not copr_config.has_option('copr-cli', 'login'):
-        raise DgrocException(
-            'No `login` specified in the `copr-cli` section of the copr '
-            'configuration file.')
-    login = copr_config.get('copr-cli', 'login')
-
-    if not copr_config.has_option('copr-cli', 'token'):
-        raise DgrocException(
-            'No `token` specified in the `copr-cli` section of the copr '
-            'configuration file.')
-    token = copr_config.get('copr-cli', 'token')
-
+    build_ids = []
     ## Build project/srpm in copr
     for project in srpms:
         srpms = [
@@ -309,12 +321,79 @@ def copr_build(config, srpms):
         try:
             output = json.loads(req.text)
         except ValueError:
-            sys.stderr.write("Unknown response from server.")
+            print "Unknown response from server."
+            print req.text
+            print req.json()
             return
         if req.status_code != 200:
             print "Something went wrong:\n  %s" % (output['error'])
             return
         print output
+        build_ids.append('id')
+    return build_ids
+
+
+def check_copr_build(config, build_ids):
+    ''' Check the status of builds running in copr.
+    '''
+
+    ## dgroc config check
+    if not config.has_option('main', 'copr_url'):
+        warnings.warn(
+            'No `copr_url` option set in the `main` section of the dgroc '
+            'configuration file, using default: %s' % COPR_URL)
+        copr_url = COPR_URL
+    else:
+        copr_url = config.get('main', 'copr_url')
+
+    if not copr_url.endswith('/'):
+        copr_url = '%s/' % copr_url
+
+    insecure = False
+    if not config.has_option('main', 'no_ssl_check') \
+            or config.get('main', 'no_ssl_check'):
+        warnings.warn(
+            "Option `no_ssl_check` was set to True, we won't check the ssl "
+            "certificate when submitting the builds to copr")
+        insecure = config.get('main', 'no_ssl_check')
+
+    username, login, token = _get_copr_auth()
+
+    build_ip = []
+    ## Build project/srpm in copr
+    for build_id in build_ids:
+
+        URL = '%s/api/coprs/build_status/%s/' % (
+            copr_url,
+            build_id)
+
+        req = requests.get(
+            URL, auth=(login, token), verify=not insecure)
+
+        if '<title>Sign in Coprs</title>' in req.text:
+            print "Invalid API token"
+            return
+
+        if req.status_code == 404:
+            if copr is None:
+                print "User %s is unknown." % user['username']
+            else:
+                print "Project %s/%s not found." % (user['username'], copr)
+            return
+        try:
+            output = json.loads(req.text)
+        except ValueError:
+            print "Unknown response from server."
+            print req.text
+            return
+        if req.status_code != 200:
+            print "Something went wrong:\n  %s" % (output['error'])
+            return
+        print output
+
+        if output['status'] in ('pending', 'running'):
+            build_ip.append(build_id)
+    return build_ip
 
 
 def main():
@@ -356,9 +435,14 @@ def main():
         print err
 
     try:
-        copr_build(config, srpms)
+        build_ids = copr_build(config, srpms)
     except DgrocException, err:
         print err
+
+    while build_ids:
+        time.sleep(45)
+        print datetime.datetime.now()
+        build_ids = check_copr_build(config, build_ids)
 
 
 if __name__ == '__main__':

@@ -28,11 +28,19 @@ Get it running
     upload_command = cp %s /var/www/html/subsurface/
     upload_url = http://my_server/subsurface/%s
     no_ssl_check = True
-    
+
     [subsurface]
     git_url = git://subsurface.hohndel.org/subsurface.git
     git_folder = /tmp/subsurface/
     spec_file = ~/GIT/subsurface/subsurface.spec
+
+    [guake]
+    git_url = https://github.com/Guake/guake.git
+    git_folder = /tmp/guake/
+    spec_file = ~/GIT/guake/guake.spec
+    patch_files = ~/GIT/guake/guake-0.2.2-fix_vte.patch,
+                  ~/GIT/guake/0001-Remove-vte-check-in-the-configure.ac.patch
+
 
 The Main section
 ----------------
@@ -71,6 +79,10 @@ is not already cloned on the disk (see `git_folder`).
 `git_folder` The location of the local clone of the git repository to build.
 
 `spec_file` The location of the spec file for the project to build.
+
+`patch_files` A comma separated list of patches required to build the project.
+    These files will be copied over to the rpm sourcedir to be present when
+    building the source rpm.
 
 .. Note:: The spec file should be fully functionnal as all `dgroc` will do is
           update the `Source0`, `Release` and add an entry in the `Changelog`.

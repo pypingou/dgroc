@@ -335,11 +335,8 @@ def copr_build(config, srpms):
             return
 
         if req.status_code == 404:
-            if copr is None:
-                print "User %s is unknown." % user['username']
-            else:
-                print "Project %s/%s not found." % (user['username'], copr)
-            return
+            print "Project %s/%s not found." % (user['username'], project)
+
         try:
             output = json.loads(req.text)
         except ValueError:
@@ -397,11 +394,8 @@ def check_copr_build(config, build_ids):
             return
 
         if req.status_code == 404:
-            if copr is None:
-                print "User %s is unknown." % user['username']
-            else:
-                print "Project %s/%s not found." % (user['username'], copr)
-            return
+            print "Build %s not found." % (build_id)
+
         try:
             output = json.loads(req.text)
         except ValueError:
@@ -411,7 +405,7 @@ def check_copr_build(config, build_ids):
         if req.status_code != 200:
             print "Something went wrong:\n  %s" % (output['error'])
             return
-        print output
+        print '  Build %s' % build_id, output
 
         if output['status'] in ('pending', 'running'):
             build_ip.append(build_id)

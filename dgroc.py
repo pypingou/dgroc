@@ -100,7 +100,9 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email):
             if row.startswith('Release:'):
                 if commit_hash in row:
                     raise DgrocException('Spec already up to date')
-                row = 'Release:        1.%s%%{?dist}' % (release)
+                rel_num = row.split('ase:')[1].strip().split('%{?dist')[0]
+                rel_num = rel_num.split('.')[0]
+                row = 'Release:        %s.%s%%{?dist}' % (rel_num, release)
             if row.startswith('Source0:'):
                 row = 'Source0:        %s' % (archive_name)
             if row.startswith('%changelog'):

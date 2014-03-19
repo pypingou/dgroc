@@ -6,6 +6,7 @@
  Authors:
    Pierre-Yves Chibon <pingou@pingoured.fr>
 
+License: GPLv3 or any later version.
 """
 
 import argparse

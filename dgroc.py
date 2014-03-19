@@ -82,7 +82,7 @@ def get_arguments():
         default=False,
         help='Expand the level of data returned')
     parser.add_argument(
-        '--srpmonly', dest='srpmonly', action='store_true',
+        '--srpm-only', dest='srpmonly', action='store_true',
         default=False,
         help='Generate the new source rpm but do not build on copr')
     parser.add_argument(

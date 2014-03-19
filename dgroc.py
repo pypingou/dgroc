@@ -15,6 +15,7 @@ import json
 import logging
 import os
 import subprocess
+import shutil
 import time
 import warnings
 from datetime import date
@@ -220,6 +221,25 @@ def generate_new_srpm(config, project):
         archive_name,
         config.get('main', 'username'),
         config.get('main', 'email'))
+
+    # Copy patches
+    if config.has_option(project, 'patch_files'):
+        patches = config.get(project, 'patch_files').split(',')
+        patches = [patch.strip() for patch in patches]
+        print patches
+        for patch in patches:
+            patch = os.path.expanduser(patch)
+            print patch
+            if not patch or not os.path.exists(patch):
+                print '`%s` not found' % patch
+                continue
+            filename = os.path.basename(patch)
+            dest = os.path.join(get_rpm_sourcedir(), filename)
+            print 'Copying from %s, to %s' % (patch, dest)
+            shutil.copy(
+                patch,
+                dest
+            )
 
     # Generate SRPM
     build = subprocess.Popen(

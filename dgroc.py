@@ -81,6 +81,14 @@ def get_arguments():
         '--debug', dest='debug', action='store_true',
         default=False,
         help='Expand the level of data returned')
+    parser.add_argument(
+        '--srpmonly', dest='srpmonly', action='store_true',
+        default=False,
+        help='Generate the new source rpm but do not build on copr')
+    parser.add_argument(
+        '--no-monitoring', dest='monitoring', action='store_false',
+        default=True,
+        help='Generate the new source rpm but do not build on copr')
 
     return parser.parse_args()
 
@@ -445,6 +453,9 @@ def main():
     if not srpms:
         return
 
+    if args.srpmonly:
+        return
+
     try:
         upload_srpms(config, srpms.values())
     except DgrocException, err:
@@ -455,12 +466,22 @@ def main():
     except DgrocException, err:
         print err
 
-    print 'Monitoring builds...'
-    while build_ids:
-        time.sleep(45)
-        print datetime.datetime.now()
-        build_ids = check_copr_build(config, build_ids)
+    if args.monitoring:
+        print 'Monitoring builds...'
+        while build_ids:
+            time.sleep(45)
+            print datetime.datetime.now()
+            build_ids = check_copr_build(config, build_ids)
 
 
 if __name__ == '__main__':
     main()
+    #build_ids = [6065]
+    #config = ConfigParser.ConfigParser()
+    #config.read(DEFAULT_CONFIG)
+    #print 'Monitoring builds...'
+    #build_ids = check_copr_build(config, build_ids)
+    #while build_ids:
+        #time.sleep(45)
+        #print datetime.datetime.now()
+        #build_ids = check_copr_build(config, build_ids)

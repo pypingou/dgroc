@@ -6,8 +6,9 @@ dgroc
 
 dgroc: Daily Git Rebuild On Copr
 
-This project aims at easily provide daily build of a project tracked via git and
-made available via `copr <http://copr.fedoraproject.org>`_.
+This project aims at easily provide daily build of a project tracked via
+git and made available via `copr <http://copr.fedoraproject.org>`_.
+
 
 Get it running
 ==============
@@ -44,52 +45,58 @@ Get it running
 
 The Main section
 ----------------
-`username` The name to use in the changelog of the spec file when updating it.
+`username`` The name to use in the changelog of the spec file when updating
+it.
 
-`email` The email to use in the changelog of the spec file when updating it.
+``email`` The email to use in the changelog of the spec file when updating
+it.
 
-`copr_url` The url of `copr`_ to use.
+``copr_url`` The url of `copr`_ to use.
 
-`upload_command` The command to run to make the source rpm (src.rpm, srpm)
+``upload_command`` The command to run to make the source rpm (src.rpm, srpm)
 available to copr. This can be a copy command (cp) or a copy over ssh (scp).
-Note that the ``%s`` is important, it will be replaced by the full path to the
-source rpm created.
+Note that the ``%s`` is important, it will be replaced by the full path to
+the source rpm created.
 
-`upload_url` The url of the source rpm once it has been uploaded. Note that here
-as well the ``%s`` is important as it will be replaced by the source rpm file
-name.
+`upload_url` The url of the source rpm once it has been uploaded. Note that
+here as well the ``%s`` is important as it will be replaced by the source
+rpm file name.
 
 For example, if you upload your source rpm onto your fedorapeople space, your
-`upload_command` might be: ``scp %s fedorapeople:public_html/srpms/`` and your
-`upload_url` might be: ``https://pingou.fedorapeople.org/srpms/%s``.
+``upload_command`` might be: ``scp %s fedorapeople:public_html/srpms/`` and
+your ``upload_url`` might be: ``https://pingou.fedorapeople.org/srpms/%s``.
 
-`no_ssl_check` Simple boolean to check the ssl certificate when starting the
-build on copr. At the moment the ssl certificate is self-signed and thus
-invalid. So using the ``https`` version of `copr_url` will require a
-`no_ssl_check` set to ``True``.
+``no_ssl_check`` Simple boolean to check the ssl certificate when starting
+the build on copr. At the moment the ssl certificate is self-signed and thus
+invalid. So using the ``https`` version of ``copr_url`` will require a
+``no_ssl_check`` set to ``True``.
+
 
 The project section
 -------------------
 
 For each project, only three options are required:
 
-`git_url` The url to the git repository, that is only required if the git repo
-is not already cloned on the disk (see `git_folder`).
+``git_url`` The url to the git repository, that is only required if the git
+repo is not already cloned on the disk (see ``git_folder``).
 
-`git_folder` The location of the local clone of the git repository to build.
+``git_folder`` The location of the local clone of the git repository to
+build.
 
-`spec_file` The location of the spec file for the project to build.
+``spec_file`` The location of the spec file for the project to build.
 
-`patch_files` A comma separated list of patches required to build the project.
-    These files will be copied over to the rpm sourcedir to be present when
-    building the source rpm.
+``patch_files`` A comma separated list of patches required to build the
+project.
+These files will be copied over to the rpm sourcedir to be present when
+building the source rpm.
 
-.. Note:: The spec file should be fully functionnal as all `dgroc` will do is
-          update the `Source0`, `Release` and add an entry in the `Changelog`.
+.. Note:: The spec file should be fully functionnal as all ``dgroc`` will do is
+          update the ``Source0``, ``Release`` and add an entry in the ``Changelog``.
 
 .. Note:: You might have to set in your spec file the %setup line to::
 
               %setup -q -n <projectname>
+
 
 Run the project
 ---------------

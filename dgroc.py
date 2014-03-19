@@ -461,6 +461,7 @@ def main():
     except DgrocException, err:
         print err
 
+    print 'Monitoring builds...'
     while build_ids:
         time.sleep(45)
         print datetime.datetime.now()

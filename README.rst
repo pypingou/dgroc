@@ -28,7 +28,7 @@ Get it running
     copr_url = https://copr.fedoraproject.org/
     upload_command = cp %s /var/www/html/subsurface/
     upload_url = http://my_server/subsurface/%s
-    no_ssl_check = True
+    #no_ssl_check = True  # No longer required now that copr has a valid cert
 
     [subsurface]
     git_url = git://subsurface.hohndel.org/subsurface.git

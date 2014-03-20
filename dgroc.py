@@ -468,7 +468,7 @@ def main():
         print err
 
     if args.monitoring:
-        print 'Monitoring builds...'
+        print 'Monitoring %s builds...' % len(build_ids)
         while build_ids:
             time.sleep(45)
             print datetime.datetime.now()

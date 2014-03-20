@@ -357,7 +357,7 @@ def copr_build(config, srpms):
             print "Something went wrong:\n  %s" % (output['error'])
             return
         print output
-        build_ids.append('id')
+        build_ids.append(output['id'])
     return build_ids
 
 

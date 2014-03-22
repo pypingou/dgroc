@@ -357,7 +357,7 @@ def copr_build(config, srpms):
             LOG.info("Project %s/%s not found.", user['username'], project)
 
         try:
-            output = json.loads(req.txt)
+            output = json.loads(req.text)
         except ValueError:
             LOG.info("Unknown response from server.")
             LOG.debug(req.url)

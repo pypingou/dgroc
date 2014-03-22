@@ -12,7 +12,6 @@ License: GPLv3 or any later version.
 import argparse
 import ConfigParser
 import datetime
-import json
 import logging
 import os
 import subprocess
@@ -357,7 +356,7 @@ def copr_build(config, srpms):
             LOG.info("Project %s/%s not found.", user['username'], project)
 
         try:
-            output = json.loads(req.text)
+            output = req.json()
         except ValueError:
             LOG.info("Unknown response from server.")
             LOG.debug(req.url)
@@ -416,7 +415,7 @@ def check_copr_build(config, build_ids):
             LOG.info("Build %s not found.", build_id)
 
         try:
-            output = json.loads(req.text)
+            output = req.json()
         except ValueError:
             LOG.info("Unknown response from server.")
             LOG.debug(req.url)

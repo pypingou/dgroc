@@ -331,7 +331,7 @@ def copr_build(config, srpms):
     build_ids = []
     ## Build project/srpm in copr
     for project in srpms:
-        srpms = [
+        srpms_file = [
             config.get('main', 'upload_url') % (
                 srpms[project].rsplit('/', 1)[1])
         ]
@@ -342,7 +342,7 @@ def copr_build(config, srpms):
             project)
 
         data = {
-            'pkgs': ' '.join(srpms),
+            'pkgs': ' '.join(srpms_file),
         }
 
         req = requests.post(

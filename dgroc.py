@@ -366,7 +366,10 @@ def copr_build(config, srpms):
             LOG.info("Something went wrong:\n  %s", output['error'])
             return
         LOG.info(output)
-        build_ids.append(output['id'])
+        if 'id' in output:
+            build_ids.append(output['id'])
+        elif 'ids' in output:
+            build_ids.extend(output['ids'])
     return build_ids
 
 

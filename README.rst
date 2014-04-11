@@ -105,18 +105,18 @@ From the sources, it requires few steps:
 
 * Install dependencies::
 
-  yum install libgit2-devel python-virtualenvwrapper
+    yum install libgit2-devel python-virtualenvwrapper
 
 * Create a virtual env::
 
-  mkvirtualenv dgroc
+    mkvirtualenv dgroc
 
 * Install the python dependencies::
 
-  pip install -r requirements.txt
+    pip install -r requirements.txt
 
 * Run dgroc::
 
-  ./dgroc.py
+    ./dgroc.py
 
 For more information/output run ``./dgroc.py --debug``

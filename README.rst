@@ -101,7 +101,7 @@ building the source rpm.
 Run the project
 ---------------
 
-From the sources, it requires few steps::
+From the sources, it requires few steps:
 
 * Install dependencies::
 

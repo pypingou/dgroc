@@ -467,7 +467,9 @@ def main():
             continue
         LOG.info('Processing project: %s', project)
         try:
-            srpms[project] = generate_new_srpm(config, project)
+            srpm = generate_new_srpm(config, project)
+            if srpm:
+                srpms[project] = srpm
         except DgrocException, err:
             LOG.info('%s: %s', project, err)
 

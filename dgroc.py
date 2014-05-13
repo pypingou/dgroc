@@ -149,7 +149,7 @@ def get_rpm_sourcedir():
     return dirname
 
 
-def generate_new_srpm(config, project):
+def generate_new_srpm(config, project, first=True):
     ''' For a given project in the configuration file generate a new srpm
     if it is possible.
     '''
@@ -191,6 +191,10 @@ def generate_new_srpm(config, project):
     os.chdir(cwd)
     if pull.returncode:
         LOG.info('Strange result of the git pull:\n%s', out[0])
+        if true:
+            LOG.info('Gonna try to re-clone the project')
+            shutil.rmtree(git_folder)
+            generate_new_srpm(config, project, first=False)
         return
 
     # Retrieve last commit

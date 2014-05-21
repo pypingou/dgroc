@@ -323,7 +323,7 @@ def copr_build(config, srpms):
         copr_url = '%s/' % copr_url
 
     insecure = False
-    if not config.has_option('main', 'no_ssl_check') \
+    if config.has_option('main', 'no_ssl_check') \
             or config.get('main', 'no_ssl_check'):
         warnings.warn(
             "Option `no_ssl_check` was set to True, we won't check the ssl "

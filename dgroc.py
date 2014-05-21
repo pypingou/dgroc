@@ -324,7 +324,7 @@ def copr_build(config, srpms):
 
     insecure = False
     if config.has_option('main', 'no_ssl_check') \
-            or config.get('main', 'no_ssl_check'):
+            and config.get('main', 'no_ssl_check'):
         warnings.warn(
             "Option `no_ssl_check` was set to True, we won't check the ssl "
             "certificate when submitting the builds to copr")

@@ -394,8 +394,8 @@ def check_copr_build(config, build_ids):
         copr_url = '%s/' % copr_url
 
     insecure = False
-    if not config.has_option('main', 'no_ssl_check') \
-            or config.get('main', 'no_ssl_check'):
+    if config.has_option('main', 'no_ssl_check') \
+            and config.get('main', 'no_ssl_check'):
         warnings.warn(
             "Option `no_ssl_check` was set to True, we won't check the ssl "
             "certificate when submitting the builds to copr")

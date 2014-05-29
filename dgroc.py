@@ -262,10 +262,13 @@ def generate_new_srpm(config, project, first=True):
             )
 
     # Generate SRPM
+    env = os.environ
+    env['LANG'] = 'C'
     build = subprocess.Popen(
         ["rpmbuild", "-bs", spec_file],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        env=env)
     out = build.communicate()
     os.chdir(cwd)
     if build.returncode:

@@ -92,7 +92,7 @@ def get_arguments():
     parser.add_argument(
         '--no-monitoring', dest='monitoring', action='store_false',
         default=True,
-        help='Generate the new source rpm but do not build on copr')
+        help='Upload the srpm to copr and exit (do not monitor the build)')
 
     return parser.parse_args()
 

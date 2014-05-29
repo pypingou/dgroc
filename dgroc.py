@@ -124,9 +124,9 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email):
                 LOG.debug('Source0 line after: %s', row)
             if row.startswith('%changelog'):
                 output.append(row)
-                output.append('* %s %s <%s> - %s-%s' % (
+                output.append('* %s %s <%s> - %s-%s.%s' % (
                     date.today().strftime('%a %b %d %Y'), packager, email,
-                    version, release)
+                    version, rel_num, release)
                 )
                 output.append('- Update to git: %s' % commit_hash)
                 row = ''

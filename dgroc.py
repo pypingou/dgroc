@@ -115,7 +115,12 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email):
                     raise DgrocException('Spec already up to date')
                 LOG.debug('Release line before: %s', row)
                 rel_num = row.split('ase:')[1].strip().split('%{?dist')[0]
-                rel_num = rel_num.split('.')[0]
+                rel_list = rel_num.split('.')
+                if 'git' in rel_list[-1]:
+                    rel_list = rel_list[:-1]
+                if rel_list[-1].isdigit():
+                    rel_list[-1] = str(int(rel_list[-1])+1)
+                rel_num = '.'.join(rel_list)
                 LOG.debug('Release number: %s', rel_num)
                 row = 'Release:        %s.%s%%{?dist}' % (rel_num, release)
                 LOG.debug('Release line after: %s', row)

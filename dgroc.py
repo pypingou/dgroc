@@ -20,7 +20,6 @@ import time
 import warnings
 from datetime import date
 
-import pygit2
 import requests
 
 
@@ -41,6 +40,11 @@ class DgrocException(Exception):
 class GitReader(object):
     '''Defualt version control system to use: git'''
     short = 'git'
+
+    @classmethod
+    def init(cls):
+        '''Import the stuff git needs'''
+        import pygit2
 
     @classmethod
     def clone(cls, url, folder):
@@ -192,6 +196,7 @@ def generate_new_srpm(config, project, first=True):
         raise DgrocException(
             'Project "%s" tries to use unknown "scm" option'
             % project)
+    reader.init()
     LOG.debug('Generating new source rpm for project: %s', project)
     if not config.has_option(project, '%s_folder' % reader.short):
         raise DgrocException(

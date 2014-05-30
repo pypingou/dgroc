@@ -38,6 +38,34 @@ class DgrocException(Exception):
     pass
 
 
+class GitReader(object):
+    '''Defualt version control system to use: git'''
+    short = 'git'
+
+    @classmethod
+    def clone(cls, url, folder):
+        '''Clone the repository'''
+        pygit2.clone_repository(url, folder)
+
+    @classmethod
+    def pull(cls):
+        '''Pull from the repository'''
+        return subprocess.Popen(["git", "pull"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    @classmethod
+    def commit_hash(cls, folder):
+        '''Get the latest commit hash'''
+        repo = pygit2.Repository(folder)
+        commit = repo[repo.head.target]
+        return commit.oid.hex[:8]
+
+    @classmethod
+    def archive_cmd(cls, project, archive_name):
+        '''Command to generate the archive'''
+        return ["git", "archive", "--format=tar", "--prefix=%s/" % project,
+           "-o%s/%s" % (get_rpm_sourcedir(), archive_name), "HEAD"]
+
+
 def _get_copr_auth():
     ''' Return the username, login and API token from the copr configuration
     file.
@@ -97,12 +125,12 @@ def get_arguments():
     return parser.parse_args()
 
 
-def update_spec(spec_file, commit_hash, archive_name, packager, email):
+def update_spec(spec_file, commit_hash, archive_name, packager, email, reader):
     ''' Update the release tag and changelog of the specified spec file
-    to work with the specified git commit_hash.
+    to work with the specified commit_hash.
     '''
     LOG.debug('Update spec file: %s', spec_file)
-    release = '%sgit%s' % (date.today().strftime('%Y%m%d'), commit_hash)
+    release = '%s%s%s' % (date.today().strftime('%Y%m%d'), reader.short, commit_hash)
     output = []
     version = None
     with open(spec_file) as stream:
@@ -116,7 +144,7 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email):
                 LOG.debug('Release line before: %s', row)
                 rel_num = row.split('ase:')[1].strip().split('%{?dist')[0]
                 rel_list = rel_num.split('.')
-                if 'git' in rel_list[-1]:
+                if reader.short in rel_list[-1]:
                     rel_list = rel_list[:-1]
                 if rel_list[-1].isdigit():
                     rel_list[-1] = str(int(rel_list[-1])+1)
@@ -133,7 +161,7 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email):
                     date.today().strftime('%a %b %d %Y'), packager, email,
                     version, rel_num, release)
                 )
-                output.append('- Update to git: %s' % commit_hash)
+                output.append('- Update to %s: %s' % (reader.short, commit_hash))
                 row = ''
             output.append(row)
 
@@ -158,17 +186,23 @@ def generate_new_srpm(config, project, first=True):
     ''' For a given project in the configuration file generate a new srpm
     if it is possible.
     '''
-    LOG.debug('Generating new source rpm for project: %s', project)
-    if not config.has_option(project, 'git_folder'):
+    if not config.has_option(project, 'scm') or config.get(project, 'scm') == 'git':
+        reader = GitReader
+    else:
         raise DgrocException(
-            'Project "%s" does not specify a "git_folder" option'
+            'Project "%s" tries to use unknown "scm" option'
             % project)
-
-    if not config.has_option(project, 'git_url') and not os.path.exists(
-            config.get(project, 'git_folder')):
+    LOG.debug('Generating new source rpm for project: %s', project)
+    if not config.has_option(project, '%s_folder' % reader.short):
         raise DgrocException(
-            'Project "%s" does not specify a "git_url" option and its '
-            '"git_folder" option does not exists' % project)
+            'Project "%s" does not specify a "%s_folder" option'
+            % (project, reader.short))
+
+    if not config.has_option(project, '%s_url' % reader.short) and not os.path.exists(
+            config.get(project, '%s_folder' % reader.short)):
+        raise DgrocException(
+            'Project "%s" does not specify a "%s_url" option and its '
+            '"%s_folder" option does not exists' % (project, reader.short, reader.short))
 
     if not config.has_option(project, 'spec_file'):
         raise DgrocException(
@@ -176,26 +210,23 @@ def generate_new_srpm(config, project, first=True):
             % project)
 
     # git clone if needed
-    git_folder = config.get(project, 'git_folder')
+    git_folder = config.get(project, '%s_folder' % reader.short)
     if '~' in git_folder:
         git_folder = os.path.expanduser(git_folder)
 
     if not os.path.exists(git_folder):
-        git_url = config.get(project, 'git_url')
+        git_url = config.get(project, '%s_url' % reader.short)
         LOG.info('Cloning %s', git_url)
-        pygit2.clone_repository(git_url, git_folder)
+        reader.clone(git_url, git_folder)
 
     # git pull
     cwd = os.getcwd()
     os.chdir(git_folder)
-    pull = subprocess.Popen(
-        ["git", "pull"],
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+    pull = reader.pull()
     out = pull.communicate()
     os.chdir(cwd)
     if pull.returncode:
-        LOG.info('Strange result of the git pull:\n%s', out[0])
+        LOG.info('Strange result of the %s pull:\n%s', reader.short, out[0])
         if first:
             LOG.info('Gonna try to re-clone the project')
             shutil.rmtree(git_folder)
@@ -203,19 +234,17 @@ def generate_new_srpm(config, project, first=True):
         return
 
     # Retrieve last commit
-    repo = pygit2.Repository(git_folder)
-    commit = repo[repo.head.target]
-    commit_hash = commit.oid.hex[:8]
-    LOG.info('Last commit: %s -> %s', commit.oid.hex, commit_hash)
+    commit_hash = reader.commit_hash(git_folder)
+    LOG.info('Last commit: %s', commit_hash)
 
     # Check if commit changed
     changed = False
-    if not config.has_option(project, 'git_hash'):
-        config.set(project, 'git_hash', commit_hash)
+    if not config.has_option(project, '%s_hash' % reader.short):
+        config.set(project, '%s_hash  % reader.short', commit_hash)
         changed = True
-    elif config.get(project, 'git_hash') == commit_hash:
+    elif config.get(project, '%s_hash' % reader.short) == commit_hash:
         changed = False
-    elif config.get(project, 'git_hash') != commit_hash:
+    elif config.get(project, '%s_hash  % reader.short') != commit_hash:
         changed = True
 
     if not changed:
@@ -225,8 +254,7 @@ def generate_new_srpm(config, project, first=True):
     cwd = os.getcwd()
     os.chdir(git_folder)
     archive_name = "%s-%s.tar" % (project, commit_hash)
-    cmd = ["git", "archive", "--format=tar", "--prefix=%s/" % project,
-           "-o%s/%s" % (get_rpm_sourcedir(), archive_name), "HEAD"]
+    cmd = reader.archive_cmd(project, archive_name)
     LOG.debug('Command to generate archive: %s', ' '.join(cmd))
     pull = subprocess.Popen(
         cmd,
@@ -245,7 +273,8 @@ def generate_new_srpm(config, project, first=True):
         commit_hash,
         archive_name,
         config.get('main', 'username'),
-        config.get('main', 'email'))
+        config.get('main', 'email'),
+        reader)
 
     # Copy patches
     if config.has_option(project, 'patch_files'):

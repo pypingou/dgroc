@@ -196,7 +196,7 @@ def generate_new_srpm(config, project, first=True):
     os.chdir(cwd)
     if pull.returncode:
         LOG.info('Strange result of the git pull:\n%s', out[0])
-        if true:
+        if first:
             LOG.info('Gonna try to re-clone the project')
             shutil.rmtree(git_folder)
             generate_new_srpm(config, project, first=False)

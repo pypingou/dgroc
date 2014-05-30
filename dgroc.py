@@ -21,6 +21,14 @@ import warnings
 from datetime import date
 
 import requests
+try:
+    import pygit2
+except ImportError:
+    pass
+try:
+    import hglib
+except ImportError:
+    pass
 
 
 DEFAULT_CONFIG = os.path.expanduser('~/.config/dgroc')
@@ -43,7 +51,7 @@ class GitReader(object):
 
     @classmethod
     def init(cls):
-        '''Import the stuff git needs'''
+        '''Import the stuff git needs again and let it raise en exception now'''
         import pygit2
 
     @classmethod
@@ -75,7 +83,7 @@ class MercurialReader(object):
 
     @classmethod
     def init(cls):
-        '''Import the stuff Mercurial needs'''
+        '''Import the stuff Mercurial needs again and let it raise en exception now'''
         import hglib
 
     @classmethod

@@ -69,6 +69,38 @@ class GitReader(object):
         return ["git", "archive", "--format=tar", "--prefix=%s/" % project,
            "-o%s/%s" % (get_rpm_sourcedir(), archive_name), "HEAD"]
 
+class MercurialReader(object):
+    '''Alternative version control system to use: hg'''
+    short = 'hg'
+
+    @classmethod
+    def init(cls):
+        '''Import the stuff Mercurial needs'''
+        import hglib
+
+    @classmethod
+    def clone(cls, url, folder):
+        '''Clone the repository'''
+        hglib.clone(url, folder)
+
+    @classmethod
+    def pull(cls):
+        '''Pull from the repository'''
+        return subprocess.Popen(["hg", "pull"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+    @classmethod
+    def commit_hash(cls, folder):
+        '''Get the latest commit hash'''
+        repo = hglib.open(folder)
+        commit = commit = repo.log('tip')[0]
+        return commit.node[:12]
+
+    @classmethod
+    def archive_cmd(cls, project, archive_name):
+        '''Command to generate the archive'''
+        return ["hg", "archive", "--type=tar", "--prefix=%s/" % project,
+           "%s/%s" % (get_rpm_sourcedir(), archive_name)]
+
 
 def _get_copr_auth():
     ''' Return the username, login and API token from the copr configuration
@@ -192,6 +224,8 @@ def generate_new_srpm(config, project, first=True):
     '''
     if not config.has_option(project, 'scm') or config.get(project, 'scm') == 'git':
         reader = GitReader
+    elif config.get(project, 'scm') == 'hg':
+        reader = MercurialReader
     else:
         raise DgrocException(
             'Project "%s" tries to use unknown "scm" option'

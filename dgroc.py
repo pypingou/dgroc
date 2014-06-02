@@ -83,7 +83,7 @@ class MercurialReader(object):
 
     @classmethod
     def init(cls):
-        '''Import the stuff Mercurial needs again and let it raise en exception now'''
+        '''Import the stuff Mercurial needs again and let it raise an exception now'''
         import hglib
 
     @classmethod

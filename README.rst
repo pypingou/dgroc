@@ -36,6 +36,7 @@ Get it running
     spec_file = ~/GIT/subsurface/subsurface.spec
 
     [guake]
+    copr = subsurface
     git_url = https://github.com/Guake/guake.git
     git_folder = /tmp/guake/
     spec_file = ~/GIT/guake/guake.spec
@@ -89,6 +90,9 @@ build.
 project.
 These files will be copied over to the rpm sourcedir to be present when
 building the source rpm.
+
+``copr`` The optional name of the copr repository to build the package within.
+When not set, the project name (from `[]`) is used.
 
 .. Note:: The spec file should be fully functionnal as all ``dgroc`` will do is
           update the ``Source0``, ``Release`` and add an entry in the ``Changelog``.

@@ -12,6 +12,7 @@ License: GPLv3 or any later version.
 import argparse
 import ConfigParser
 import datetime
+import glob
 import logging
 import os
 import subprocess
@@ -326,21 +327,22 @@ def generate_new_srpm(config, project, first=True):
     # Copy patches
     if config.has_option(project, 'patch_files'):
         LOG.info('Copying patches')
-        patches = config.get(project, 'patch_files').split(',')
-        patches = [patch.strip() for patch in patches]
-        for patch in patches:
-            LOG.debug('Copying patch: %s', patch)
-            patch = os.path.expanduser(patch)
-            if not patch or not os.path.exists(patch):
-                LOG.info('Patch not found: `%s`', patch)
-                continue
-            filename = os.path.basename(patch)
-            dest = os.path.join(get_rpm_sourcedir(), filename)
-            LOG.debug('Copying from %s, to %s', patch, dest)
-            shutil.copy(
-                patch,
-                dest
-            )
+        candidates = config.get(project, 'patch_files').split(',')
+        candidates = [candidate.strip() for candidate in candidates]
+        for candidate in candidates:
+            LOG.debug('Expanding path: %s', candidate)
+            candidate = os.path.expanduser(candidate)
+            patches = glob.glob(candidate)
+            if not patches:
+                LOG.info('Could not expand path: `%s`', candidate)
+            for patch in patches:
+                filename = os.path.basename(patch)
+                dest = os.path.join(get_rpm_sourcedir(), filename)
+                LOG.debug('Copying from %s, to %s', patch, dest)
+                shutil.copy(
+                    patch,
+                    dest
+                )
 
     # Generate SRPM
     env = os.environ

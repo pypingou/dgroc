@@ -426,10 +426,15 @@ def copr_build(config, srpms):
                 srpms[project].rsplit('/', 1)[1])
         ]
 
+        if config.has_option(project, 'copr'):
+            copr = config.get(project, 'copr')
+        else:
+            copr = project
+
         URL = '%s/api/coprs/%s/%s/new_build/' % (
             copr_url,
             username,
-            project)
+            copr)
 
         data = {
             'pkgs': ' '.join(srpms_file),
@@ -443,7 +448,7 @@ def copr_build(config, srpms):
             return
 
         if req.status_code == 404:
-            LOG.info("Project %s/%s not found.", user['username'], project)
+            LOG.info("Project %s/%s not found.", user['username'], copr)
 
         try:
             output = req.json()

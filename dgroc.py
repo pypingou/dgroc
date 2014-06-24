@@ -15,6 +15,7 @@ import datetime
 import glob
 import logging
 import os
+import rpm
 import subprocess
 import shutil
 import time
@@ -178,6 +179,7 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email, reader):
     release = '%s%s%s' % (date.today().strftime('%Y%m%d'), reader.short, commit_hash)
     output = []
     version = None
+    rpm.spec(spec_file)
     with open(spec_file) as stream:
         for row in stream:
             row = row.rstrip()
@@ -202,10 +204,10 @@ def update_spec(spec_file, commit_hash, archive_name, packager, email, reader):
                 LOG.debug('Source0 line after: %s', row)
             if row.startswith('%changelog'):
                 output.append(row)
-                output.append('* %s %s <%s> - %s-%s.%s' % (
+                output.append(rpm.expandMacro('* %s %s <%s> - %s-%s.%s' % (
                     date.today().strftime('%a %b %d %Y'), packager, email,
                     version, rel_num, release)
-                )
+                ))
                 output.append('- Update to %s: %s' % (reader.short, commit_hash))
                 row = ''
             output.append(row)

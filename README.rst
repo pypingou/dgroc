@@ -15,7 +15,7 @@ Get it running
 
 * Retrieve the sources::
 
-    git clone git//github.com:pypingou/dgroc.git
+    git clone https://github.com/pypingou/dgroc.git
 
 
 * Create the configuration file ``~/.config/dgroc``

@@ -124,3 +124,18 @@ From the sources, it requires few steps:
     ./dgroc.py
 
 For more information/output run ``./dgroc.py --debug``
+
+
+Run dgroc daily
+---------------
+
+The easiest way to run dgroc daily is to simply rely on `cron
+<https://en.wikipedia.org/wiki/Cron>`_
+
+Here is an example cron entry that you will need to adjust for your setup::
+
+    30 10 * * * python /home/pingou/dgroc/dgroc.py
+
+
+This cron will run every day at 10:30 am and call the dgroc.py script within the
+dgroc clone

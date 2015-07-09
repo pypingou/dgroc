@@ -10,6 +10,9 @@ This project aims at easily provide daily build of a project tracked via
 git and made available via `copr <http://copr.fedoraproject.org>`_.
 
 
+.. contents::
+
+
 Get it running
 ==============
 

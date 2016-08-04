@@ -49,7 +49,7 @@ Get it running
 
 The Main section
 ----------------
-`username`` The name to use in the changelog of the spec file when updating
+``username`` The name to use in the changelog of the spec file when updating
 it.
 
 ``email`` The email to use in the changelog of the spec file when updating
@@ -62,7 +62,7 @@ available to copr. This can be a copy command (cp) or a copy over ssh (scp).
 Note that the ``%s`` is important, it will be replaced by the full path to
 the source rpm created.
 
-`upload_url` The url of the source rpm once it has been uploaded. Note that
+``upload_url`` The url of the source rpm once it has been uploaded. Note that
 here as well the ``%s`` is important as it will be replaced by the source
 rpm file name.
 
@@ -116,7 +116,7 @@ From the sources, it requires few steps:
 
 * Create a virtual env::
 
-    mkvirtualenv dgroc
+    mkvirtualenv --system-site-packages dgroc
 
 * Install the python dependencies::
 
@@ -124,9 +124,9 @@ From the sources, it requires few steps:
 
 * Run dgroc::
 
-    ./dgroc.py
+    python dgroc.py
 
-For more information/output run ``./dgroc.py --debug``
+For more information/output run ``python dgroc.py --debug``
 
 
 Run dgroc daily

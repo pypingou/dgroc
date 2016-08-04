@@ -124,9 +124,9 @@ From the sources, it requires few steps:
 
 * Run dgroc::
 
-    ./dgroc.py
+    python dgroc.py
 
-For more information/output run ``./dgroc.py --debug``
+For more information/output run ``python dgroc.py --debug``
 
 
 Run dgroc daily

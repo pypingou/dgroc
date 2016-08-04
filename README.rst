@@ -116,7 +116,7 @@ From the sources, it requires few steps:
 
 * Create a virtual env::
 
-    mkvirtualenv dgroc
+    mkvirtualenv --system-site-packages dgroc
 
 * Install the python dependencies::
 

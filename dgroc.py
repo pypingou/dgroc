@@ -385,7 +385,7 @@ def upload_srpms(config, srpms):
         cmd = upload_command % srpm
         outcode = subprocess.call(cmd, shell=True)
         if outcode:
-            LOG.info('Strange result with the command: `%s`', ' '.join(cmd))
+            LOG.info('Strange result with the command: `%s`', cmd)
 
 
 def copr_build(config, srpms):

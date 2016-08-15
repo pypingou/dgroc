@@ -450,7 +450,7 @@ def copr_build(config, srpms):
             return
 
         if req.status_code == 404:
-            LOG.info("Project %s/%s not found.", user['username'], copr)
+            LOG.info("Project %s/%s not found.", username, copr)
 
         try:
             output = req.json()

@@ -35,7 +35,7 @@ except ImportError:
 
 
 DEFAULT_CONFIG = os.path.expanduser('~/.config/dgroc')
-COPR_URL = 'http://copr.fedoraproject.org/'
+COPR_URL = 'https://copr.fedorainfracloud.org/'
 # Initial simple logging stuff
 logging.basicConfig(format='%(message)s')
 LOG = logging.getLogger("dgroc")

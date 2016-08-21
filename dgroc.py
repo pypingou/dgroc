@@ -14,6 +14,7 @@ import argparse
 import ConfigParser
 import datetime
 import glob
+import json
 import logging
 import os
 import rpm
@@ -375,9 +376,10 @@ def upload_srpms(config, srpms):
     upload the src.rpm generated somewhere.
     '''
     if not config.has_option('main', 'upload_command'):
-        raise DgrocException(
+        LOG.info(
             'No `upload_command` specified in the `main` section of the '
-            'configuration file.')
+            'configuration file. Attempting to build by direct upload.')
+        return
 
     upload_command = config.get('main', 'upload_command')
 
@@ -417,8 +419,9 @@ def copr_build(config, srpms):
     run the build in copr.
     '''
 
-    ## dgroc config check
-    if not config.has_option('main', 'upload_url'):
+    # dgroc config check
+    if config.has_option('main', 'upload_command') and \
+            not config.has_option('main', 'upload_url'):
         raise DgrocException(
             'No `upload_url` specified in the `main` section of the dgroc '
             'configuration file.')
@@ -444,11 +447,8 @@ def copr_build(config, srpms):
     username, login, token = _get_copr_auth()
 
     build_ids = []
-    ## Build project/srpm in copr
+    # Build project/srpm in copr
     for project in srpms:
-        srpm_file = config.get('main', 'upload_url') % (
-            srpms[project].rsplit('/', 1)[1])
-
         if config.has_option(project, 'copr'):
             copr = config.get(project, 'copr')
         else:
@@ -456,15 +456,29 @@ def copr_build(config, srpms):
 
         project_id = get_project_id(copr_url, username, copr)
 
-        data = {
+        metadata = {
             'project_id': project_id,
             'chroots': get_chroots(copr_url, project_id),
-            'srpm_url': srpm_file,
         }
-
         url = '%s/api_2/builds' % (copr_url)
-        req = requests.post(
-            url, auth=(login, token), json=data, verify=not insecure)
+        srpm_name = os.path.basename(srpms[project])
+
+        if config.has_option('main', 'upload_command'):
+            # SRPMs are uploaded to remote location.
+            srpm_file = config.get('main', 'upload_url') % srpm_name
+
+            metadata['srpm_url'] = srpm_file
+            req = requests.post(
+                url, auth=(login, token), json=metadata, verify=not insecure)
+        else:
+            # Directly upload SRPM to COPR
+            files = {
+                'srpm': (srpm_name, open(srpms[project], 'rb'),
+                         'application/x-rpm'),
+                'metadata': ('', json.dumps(metadata)),
+            }
+            req = requests.post(
+                url, auth=(login, token), files=files, verify=not insecure)
 
         if req.status_code != requests.codes.created:
             LOG.error('Failed to start build in COPR')

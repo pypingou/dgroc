@@ -391,11 +391,12 @@ def upload_srpms(config, srpms):
             LOG.info('Strange result with the command: `%s`', cmd)
 
 
-def get_project_id(copr_url, username, copr):
+def get_project_id(copr_url, username, copr, insecure=False):
     ''' Given username and COPR name, find its internal id. '''
     try:
         response = requests.get('%s/api_2/projects' % copr_url,
-                                params=dict(owner=username, name=copr))
+                                params=dict(owner=username, name=copr),
+                                verify=not insecure)
         project = response.json()['projects'][0]
         return project['project']['id']
     except (ValueError, KeyError, IndexError):
@@ -403,11 +404,12 @@ def get_project_id(copr_url, username, copr):
             'Failed to find project id of %s/%s' % (username, copr))
 
 
-def get_chroots(copr_url, project_id):
+def get_chroots(copr_url, project_id, insecure=False):
     ''' Given a project id, obtain list of names of enabled chroots. '''
     try:
         response = requests.get('%s/api_2/projects/%s/chroots' % (copr_url,
-                                                                  project_id))
+                                                                  project_id),
+                                verify=not insecure)
         return [obj['chroot']['name'] for obj in response.json()['chroots']]
     except (ValueError, KeyError, IndexError):
         raise DgrocException(
@@ -454,11 +456,11 @@ def copr_build(config, srpms):
         else:
             copr = project
 
-        project_id = get_project_id(copr_url, username, copr)
+        project_id = get_project_id(copr_url, username, copr, insecure=insecure)
 
         metadata = {
             'project_id': project_id,
-            'chroots': get_chroots(copr_url, project_id),
+            'chroots': get_chroots(copr_url, project_id, insecure=insecure),
         }
         url = '%s/api_2/builds' % (copr_url)
         srpm_name = os.path.basename(srpms[project])

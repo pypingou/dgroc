@@ -75,6 +75,10 @@ the build on copr. At the moment the ssl certificate is self-signed and thus
 invalid. So using the ``https`` version of ``copr_url`` will require a
 ``no_ssl_check`` set to ``True``.
 
+``copr_config`` The path to a config file with details about COPR connection.
+Go to the API page on your COPR instance to get the contents. This is useful if
+you want to use dgroc with different copr instances. Defaults to
+``~/.config/copr``.
 
 The project section
 -------------------

@@ -114,13 +114,14 @@ class MercurialReader(object):
            "%s/%s" % (get_rpm_sourcedir(), archive_name)]
 
 
-def _get_copr_auth():
+def _get_copr_auth(copr_file):
     ''' Return the username, login and API token from the copr configuration
     file.
     '''
     LOG.debug('Reading configuration for copr')
     ## Copr config check
-    copr_config_file = os.path.expanduser('~/.config/copr')
+    copr_file = copr_file or '~/.config/copr'
+    copr_config_file = os.path.expanduser(copr_file)
     if not os.path.exists(copr_config_file):
         raise DgrocException('No `~/.config/copr` file found.')
 
@@ -446,7 +447,8 @@ def copr_build(config, srpms):
             "certificate when submitting the builds to copr")
         insecure = config.get('main', 'no_ssl_check')
 
-    username, login, token = _get_copr_auth()
+    copr_config = config.get('main', 'copr_config', None)
+    username, login, token = _get_copr_auth(copr_config)
 
     build_ids = []
     # Build project/srpm in copr
@@ -521,7 +523,8 @@ def check_copr_build(config, build_ids):
             "certificate when submitting the builds to copr")
         insecure = config.get('main', 'no_ssl_check')
 
-    username, login, token = _get_copr_auth()
+    copr_config = config.get('main', 'copr_config', None)
+    username, login, token = _get_copr_auth(copr_config)
 
     build_ip = []
     ## Build project/srpm in copr

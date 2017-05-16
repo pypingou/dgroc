@@ -447,7 +447,7 @@ def copr_build(config, srpms):
             "certificate when submitting the builds to copr")
         insecure = config.get('main', 'no_ssl_check')
 
-    copr_config = config.get('main', 'copr_config', None)
+    copr_config = config.get('main', 'copr_config')
     username, login, token = _get_copr_auth(copr_config)
 
     build_ids = []
@@ -523,7 +523,7 @@ def check_copr_build(config, build_ids):
             "certificate when submitting the builds to copr")
         insecure = config.get('main', 'no_ssl_check')
 
-    copr_config = config.get('main', 'copr_config', None)
+    copr_config = config.get('main', 'copr_config')
     username, login, token = _get_copr_auth(copr_config)
 
     build_ip = []
@@ -575,7 +575,7 @@ def main():
         LOG.setLevel(logging.INFO)
 
     # Read configuration file
-    config = ConfigParser.ConfigParser()
+    config = ConfigParser.ConfigParser(defaults={'copr_config': None})
     config.read(args.config)
 
     if not config.has_option('main', 'username'):
